@@ -58,13 +58,14 @@ func (h Hash) has(q Query) bool {
 }
 
 func (h Hash) String() string {
-	hashStr := []string{"", "Hash:", "-------------"}
+	hashStr := []string{"", "Hash:", "--------------"}
+	numCollisions := 0
 
 	for i, kmers := range h {
-		if kmers == nil {
-			continue
+		collidedKmers := []string{fmt.Sprintf("%d:", i)}
+		if len(kmers) > 1 {
+			numCollisions += len(kmers) - 1
 		}
-
 		for _, kmer := range kmers {
 			var indexes []string
 
@@ -72,13 +73,16 @@ func (h Hash) String() string {
 				indexes = append(indexes, strconv.Itoa(index))
 			}
 
-			hashStr = append(hashStr, fmt.Sprintf("%d: (%s)", i, strings.Join(indexes, ", ")))
+			collidedKmers = append(collidedKmers, fmt.Sprintf("(%s)", strings.Join(indexes, ", ")))
 		}
+
+		hashStr = append(hashStr, strings.Join(collidedKmers, " "))
 	}
 
+	hashStr = append(hashStr, fmt.Sprintf("Number of collisions: %d", numCollisions))
 	return strings.Join(hashStr, "\n")
 }
 
 func (q Query) String() string {
-	return string(q)
+	return strings.Join([]string{"", "Query:", "--------------", string(q)}, "\n")
 }

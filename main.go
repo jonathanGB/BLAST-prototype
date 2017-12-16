@@ -22,8 +22,8 @@ func main() {
 	}
 	fmt.Println(db)
 
-	var q blast.Query = []byte("ATTACAGGTCAG")
+	var q blast.Query = []byte("ATTACAGGTCAGAGCTAGTCGATATGCAGTAGTCTAGACATGCGTATGCAGTAGTCGCTATCGCGATCGCGCGATATCGATATGTGAC")
 	fmt.Println(q)
-	h := blast.HashQuery(q, 3)
+	h := blast.HashQuery(q, 11)
 	fmt.Println(h)
 }

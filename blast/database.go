@@ -28,7 +28,7 @@ func PopulateDB(sc *bufio.Scanner) (Database, error) {
 }
 
 func (db Database) String() string {
-	var dbStr []string
+	dbStr := []string{"", "Database:", "--------------"}
 
 	for i, entry := range db {
 		dbStr = append(dbStr, fmt.Sprintf("%d: %s", i+1, entry))
