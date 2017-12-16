@@ -9,6 +9,30 @@ import (
 // Database is the database of sequences on which we want to query
 type Database [][]byte
 
+// Hit is a self-contained struct representing a hit between a db index and a query hash
+type Hit struct {
+	kmer    *Kmer
+	dbIndex [2]int
+}
+
+// Scan goes through the database and alerts the `hits` channel for every hit between the query and the database
+func (db Database) Scan(h Hash, k int, hits chan<- *Hit) {
+	for i, entry := range db { // loop through db sequences
+		n := len(entry) - k + 1
+
+		for j := 0; j < n; j++ { // loop k-mers of a sequence
+			var q Query = entry[j : j+k]
+			if _, hit := h.get(q); hit != nil {
+				hits <- &Hit{
+					hit,
+					[2]int{i, j},
+				}
+			}
+		}
+	}
+	close(hits)
+}
+
 /*func (db Database) kmerLoop(k int, cb func(Query)) {
 	for i, entry := range db {
 		for j := 0; j <= len(entry)-k; i++ {
@@ -34,8 +58,13 @@ func (db Database) String() string {
 	dbStr := []string{"", "Database:", "--------------"}
 
 	for i, entry := range db {
-		dbStr = append(dbStr, fmt.Sprintf("%d: %s", i+1, entry))
+		dbStr = append(dbStr, fmt.Sprintf("%d: %s", i, entry))
 	}
 
 	return strings.Join(dbStr, "\n")
+}
+
+func (h *Hit) String() string {
+	hitStr := []string{"", "Hit:", "--------------", h.kmer.kmer, fmt.Sprintf("DB index: (%d,%d)", h.dbIndex[0], h.dbIndex[1])}
+	return strings.Join(hitStr, "\n")
 }
