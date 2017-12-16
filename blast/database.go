@@ -6,17 +6,20 @@ import (
 	"strings"
 )
 
+// Database is the database of sequences on which we want to query
 type Database [][]byte
 
-func (db Database) kmerLoop(k int, cb func(Query)) {
+/*func (db Database) kmerLoop(k int, cb func(Query)) {
 	for i, entry := range db {
 		for j := 0; j <= len(entry)-k; i++ {
 			var q Query = entry[j : j+k]
 			cb(q)
 		}
 	}
-}
+}*/
 
+// PopulateDB builds an in-memory database from a file scanner
+// Returns the database and an error if there was any during the scanning
 func PopulateDB(sc *bufio.Scanner) (Database, error) {
 	var db Database
 
