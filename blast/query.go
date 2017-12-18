@@ -12,8 +12,8 @@ type Query []byte
 
 // Kmer represents the k-mer (or repeats at different indices of that k-mer) in the Hash
 type Kmer struct {
-	kmer  string
-	index []int
+	kmer    string
+	indexes []int
 }
 
 // Hash is a custom-made hash table of Kmers
@@ -28,16 +28,21 @@ func getHashIndex(q Query, h Hash) int {
 
 // HashQuery builds a hash from a query and the size of the k-mers
 func HashQuery(q Query, k int) Hash {
-	n := len(q) - k + 1               // number of k-mers
-	var h Hash = make([][]*Kmer, n*2) // init hash to twice the number of k-mers
+	n := len(q) - k + 1  // number of k-mers
+	h := make(Hash, n*2) // init hash to twice the number of k-mers
+
+	// TODO: mask low-complexity regions (in the real algorithm)
 
 	for i := 0; i < n; i++ {
 		kmer := q[i : i+k]
+
+		// TODO: ignore low-scoring k-mers according to substitution matrix (in the real algorithm)
+
 		index, foundKmer := h.get(kmer)
 
 		// we found an existing k-mer, add our index to the slice of indices (means this k-mer is repeated)
 		if foundKmer != nil {
-			foundKmer.index = append(foundKmer.index, i)
+			foundKmer.indexes = append(foundKmer.indexes, i)
 			continue
 		}
 
@@ -49,6 +54,28 @@ func HashQuery(q Query, k int) Hash {
 	}
 
 	return h
+}
+
+// GetUniquePairs takes a slice of Pairs and returns the unique pairs
+// A common alignment in the same database sequence should only return one Pair
+func GetUniquePairs(pairs []*Pair) (uniquePairs []*Pair) {
+	h := make(Hash, len(pairs)*2)
+
+	for _, pair := range pairs {
+		// make an intermediate hash value for the pair, consisting of the alignment and the sequence index
+		pairHash := append(pair.Alignment, byte(pair.Sequence))
+		// if there are no corresponding k-mers, this Pair is currently unique
+		index, kmer := h.get(pairHash)
+		if kmer == nil {
+			h[index] = append(h[index], &Kmer{
+				string(pairHash),
+				nil,
+			})
+			uniquePairs = append(uniquePairs, pair)
+		}
+	}
+
+	return
 }
 
 // get finds the query in the hash
@@ -83,7 +110,7 @@ func (h Hash) String() string {
 		for _, kmer := range kmers {
 			var indexes []string
 
-			for _, index := range kmer.index {
+			for _, index := range kmer.indexes {
 				indexes = append(indexes, strconv.Itoa(index))
 			}
 
