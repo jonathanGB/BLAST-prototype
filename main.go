@@ -13,14 +13,16 @@ import (
 	"./blast"
 )
 
+// blastJSON is JSON data sent by the user defining the BLAST search and output the user desires
 type blastJSON struct {
 	Query     string `json:"query"`
 	IsVerbose bool   `json:"isVerbose"`
 	Kmer      int    `json:"kMer"`
 }
 
-func (data *blastJSON) getBlastOutput(db blast.Database) (string, error) {
-	var output []string
+// getBlastOutput runs the simplified BLAST algo and returns the output
+func (data *blastJSON) getBlastOutput(db blast.Database) string {
+	var output []string // output of the algo
 
 	k := data.Kmer
 	var q blast.Query = blast.Query(data.Query)
@@ -70,27 +72,25 @@ func (data *blastJSON) getBlastOutput(db blast.Database) (string, error) {
 		output = append(output, uniquePair.String())
 	}
 
-	return strings.Join(output, "\n"), nil
+	return strings.Join(output, "\n")
 }
 
+// provide a closure to the HandlerFunc so it has access to the database (db)
 func processBlast(db blast.Database) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if r.Method != "POST" {
 			return
 		}
+
 		var data blastJSON
 		err := json.NewDecoder(r.Body).Decode(&data)
 		if err != nil {
 			fmt.Fprint(w, "Error parsing request!")
 			return
 		}
+		defer r.Body.Close() // close body reader (memory-leak otherwise)
 
-		output, err := data.getBlastOutput(db)
-		if err != nil {
-			fmt.Fprint(w, "Error getting BLAST results")
-		} else {
-			fmt.Fprint(w, output)
-		}
+		fmt.Fprint(w, data.getBlastOutput(db))
 	}
 }
 
