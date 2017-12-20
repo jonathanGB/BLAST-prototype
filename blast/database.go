@@ -85,7 +85,7 @@ func (hit *Hit) ExtendHit(k, t int, q Query, db Database, pairs chan<- *Pair, wg
 
 		// this pair is good
 		pairs <- &Pair{
-			sequence[iDB:jDB],
+			sequence[iDB : jDB+1],
 			dist,
 			hit.dbIndex[0],
 		}
