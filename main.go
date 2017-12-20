@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"./blast"
 )
@@ -22,6 +23,7 @@ type blastJSON struct {
 
 // getBlastOutput runs the simplified BLAST algo and returns the output
 func (data *blastJSON) getBlastOutput(db blast.Database) string {
+	start := time.Now() // will use to compute execution time
 	var output []string // output of the algo
 
 	k := data.Kmer
@@ -72,6 +74,7 @@ func (data *blastJSON) getBlastOutput(db blast.Database) string {
 		output = append(output, uniquePair.String())
 	}
 
+	output = append(output, fmt.Sprintf("\n\nExecution time: %s", time.Since(start))) // print execution time
 	return strings.Join(output, "\n")
 }
 
