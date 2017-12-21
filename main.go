@@ -41,6 +41,7 @@ func (data *blastJSON) getBlastOutput(db blast.Database) string {
 	}
 
 	hits := make(chan *blast.Hit)
+	var numOfHits int
 	pairs := make(chan *blast.Pair)
 	var hitsWg sync.WaitGroup
 
@@ -49,6 +50,7 @@ func (data *blastJSON) getBlastOutput(db blast.Database) string {
 		// go through all the hits and extend them
 		for hit := range hits {
 			output = append(output, hit.String())
+			numOfHits++
 
 			hitsWg.Add(1)
 			go hit.ExtendHit(k, t, q, db, pairs, &hitsWg)
@@ -74,7 +76,7 @@ func (data *blastJSON) getBlastOutput(db blast.Database) string {
 		output = append(output, uniquePair.String())
 	}
 
-	output = append(output, fmt.Sprintf("\n\nExecution time: %s", time.Since(start))) // print execution time
+	output = append([]string{fmt.Sprintf("\n\nExecution time: %s\nNumber of hits: %d\nNumber of pairs: %d", time.Since(start), numOfHits, len(uniquePairs))}, output...) // print execution time
 	return strings.Join(output, "\n")
 }
 
@@ -109,17 +111,26 @@ func index(w http.ResponseWriter, r *http.Request) {
 	http.ServeFile(w, r, file)
 }
 
-func main() {
+func initDB() blast.Database {
 	f, err := os.Open("db.txt")
 	if err != nil {
 		fmt.Println("Error reading db file")
-		return
+		return nil
 	}
 
 	db, err := blast.PopulateDB(bufio.NewScanner(f))
 	if err != nil {
 		fmt.Printf("Problem populating database: %v\n", err)
-		return
+		return nil
+	}
+
+	return db
+}
+
+func main() {
+	db := initDB()
+	if db == nil {
+		panic("DB not initialized!")
 	}
 	fmt.Println(db)
 
